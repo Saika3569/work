@@ -8,17 +8,17 @@ require "zlib"
 require 'awesome_print'
 require 'terminal-notifier'
 require 'byebug'
+require_relative './key.rb'
 
 class ApiPtxData
 
-  def initialize
-    @app_id = "8140620599e6417ab36ee14283a8759f"
-    @app_key = "5424dazV1511nHq2pKAkFytx0Ok"
+  def initialize(**options)
+    @app_id = options[:id]
+    @app_key = options[:key]
     @bus_api = "https://ptx.transportdata.tw/MOTC/v2/Bus/RealTimeNearStop/City/Taipei/672?$filter=Direction%20eq%201&$orderby=StopSequence&$format=JSON"
   end
 
   def perform
-
     return TerminalNotifier.notify('有靠近的車輛', title: near_station.name) if near_station
 
     '目前還沒有靠近的車輛'
@@ -92,5 +92,4 @@ class ApiPtxData
   end
 end
 
-
-ap ApiPtxData.new.perform
+ap ApiPtxData.new(id: API_ID, key: API_KEY).perform
