@@ -14,32 +14,25 @@ class ApiPtxData
   def initialize
     @app_id = "8140620599e6417ab36ee14283a8759f"
     @app_key = "5424dazV1511nHq2pKAkFytx0Ok"
-    @bus_api = "https://ptx.transportdata.tw/MOTC/v2/Bus/RealTimeNearStop/City/Taipei/672?$format=JSON"
+    @bus_api = "https://ptx.transportdata.tw/MOTC/v2/Bus/RealTimeNearStop/City/Taipei/672?$filter=Direction%20eq%201&$orderby=StopSequence&$format=JSON"
   end
 
   def perform
 
-    if near_station.any?
-      TerminalNotifier.notify('有靠近的車輛', title: arr(near_station)[:name], sub_title: arr(near_station)[:plate_numb])
-    else
-      '目前還沒有靠近的車輛'
-    end
+    return TerminalNotifier.notify('有靠近的車輛', title: near_station.name) if near_station
+
+    '目前還沒有靠近的車輛'
   end
+
   private
 
-  def attr(*near_station)
-    {
-      plate_numb: near_station['PlateNumb'],
-      name: near_station['StopName']['Zh_tw']
-    }
-  end
-
   def near_station
-    filter_direction.select {|data| (2..4).include?(data["StopSequence"]) }
-  end
+    near_station = get_response(uri: @bus_api, gzip: false).json.select {|data| (2..4).include?(data["StopSequence"]) }[0]
 
-  def filter_direction
-    get_response(uri: @bus_api, gzip: false).json.reject { |data| data['Direction'].zero? }
+    OpenStruct.new(
+      name: near_station['StopName']['Zh_tw']
+    ) unless near_station.nil?
+
   end
 
   def get_response(uri:, gzip: false, options: {})
